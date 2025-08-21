@@ -1,0 +1,56 @@
+import streamlit as st
+import requests
+from textblob import TextBlob
+
+# Function to fetch financial news
+def fetch_news(query):
+    # Example API endpoint (replace with a real news API)
+    url = f"https://newsapi.org/v2/everything?q={query}&apiKey=1c6b58ef9a17436c95be94b278611e54"
+    response = requests.get(url)
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        news_data = response.json()
+        return news_data.get('articles', [])
+    else:
+        st.error(f"Error fetching news: {response.status_code}")
+        return []
+
+# Function to perform sentiment analysis
+def analyze_sentiment(text):
+    blob = TextBlob(text)
+    return blob.sentiment.polarity
+
+# Function to determine sentiment color and emoji
+def sentiment_color_and_emoji(sentiment):
+    if sentiment > 0:
+        return "green", "😊"
+    elif sentiment < 0:
+        return "red", "😞"
+    else:
+        return "yellow", "😐"
+
+# Streamlit app
+st.title("Financial News Sentiment Analysis")
+
+# User input
+query = st.text_input("Enter a company or topic:", "Tesla")
+
+# Fetch news
+news_articles = fetch_news(query)
+
+# Display news and sentiment
+if news_articles:
+    st.subheader(f"News Articles for '{query}'")
+    for article in news_articles:
+        title = article.get('title', 'No title')
+        description = article.get('description', 'No description')
+        sentiment = analyze_sentiment(description)
+        color, emoji = sentiment_color_and_emoji(sentiment)
+        
+        st.write(f"**Title:** {title}")
+        st.write(f"**Description:** {description}")
+        st.markdown(f"**Sentiment Score:** <span style='color:{color}'>{sentiment:.2f} {emoji}</span>", unsafe_allow_html=True)
+        st.write("---")
+else:
+    st.write("No news articles found.") 
